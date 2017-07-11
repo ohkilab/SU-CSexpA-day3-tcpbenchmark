@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
-#include <sys/_timeval.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/types.h>

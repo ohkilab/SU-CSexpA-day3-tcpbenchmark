@@ -16,7 +16,6 @@
 #include <netdb.h>
 #include <sys/types.h>
 #include <pthread.h>
-#include <sys/_timeval.h>
 #include <sys/time.h>
 #include "libclient.h"
 
