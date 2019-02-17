@@ -11,18 +11,18 @@
 #include <stdbool.h>
 
 /**
- * @brief TCPƒNƒ‰ƒCƒAƒ“ƒgƒ\ƒPƒbƒg‚ğ¶¬‚µƒT[ƒo‚ÉÚ‘±‚ğs‚¤
- * @param hostName ƒzƒXƒg–¼
- * @param portNum ƒ|[ƒg”Ô†
- * @return ƒNƒ‰ƒCƒAƒ“ƒgƒ\ƒPƒbƒg
+ * @brief TCPã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆã‚½ã‚±ãƒƒãƒˆã‚’ç”Ÿæˆã—ã‚µãƒ¼ãƒã«æ¥ç¶šã‚’è¡Œã†
+ * @param hostName ãƒ›ã‚¹ãƒˆå
+ * @param portNum ãƒãƒ¼ãƒˆç•ªå·
+ * @return ã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆã‚½ã‚±ãƒƒãƒˆ
  */
 int clientTCPSocket(const char *hostName, const char *portNum);
 
 /**
- * @brief ‘—óMƒ‹[ƒv
- * @param soc ƒNƒ‰ƒCƒAƒ“ƒgƒ\ƒPƒbƒg
- * @param times ‘—M‰ñ”
- * @return ‘—óM¬Œ÷(true) or ¸”s(false)
+ * @brief é€å—ä¿¡ãƒ«ãƒ¼ãƒ—
+ * @param soc ã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆã‚½ã‚±ãƒƒãƒˆ
+ * @param times é€ä¿¡å›æ•°
+ * @return é€å—ä¿¡æˆåŠŸ(true) or å¤±æ•—(false)
  */
 bool sendRecvLoop(int sock, int times);
 

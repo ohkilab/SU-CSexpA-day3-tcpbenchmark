@@ -18,13 +18,13 @@
 
 int clientTCPSocket(const char *hostName, const char *portNum) {
 
-	// ƒAƒhƒŒƒXî•ñ‚Ìƒqƒ“ƒg‚ğƒ[ƒƒNƒŠƒA
+	// ã‚¢ãƒ‰ãƒ¬ã‚¹æƒ…å ±ã®ãƒ’ãƒ³ãƒˆã‚’ã‚¼ãƒ­ã‚¯ãƒªã‚¢
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 
-	// ƒAƒhƒŒƒXî•ñ‚Ì“o˜^
+	// ã‚¢ãƒ‰ãƒ¬ã‚¹æƒ…å ±ã®ç™»éŒ²
 	struct addrinfo* res = NULL;
 	int errcode = 0;
 	if ((errcode = getaddrinfo(hostName, portNum, &hints, &res)) != 0) {
@@ -32,7 +32,7 @@ int clientTCPSocket(const char *hostName, const char *portNum) {
 		return (-1);
 	}
 
-	// ƒzƒXƒg–¼Eƒ|[ƒg”Ô†•ÏŠ·iÚ‘±‚É•K{‚Å‚Í‚È‚¢j
+	// ãƒ›ã‚¹ãƒˆåãƒ»ãƒãƒ¼ãƒˆç•ªå·å¤‰æ›ï¼ˆæ¥ç¶šã«å¿…é ˆã§ã¯ãªã„ï¼‰
 	char nbuf[NI_MAXHOST];
 	char sbuf[NI_MAXSERV];
 	if ((errcode = getnameinfo(res->ai_addr, res->ai_addrlen, nbuf,
@@ -45,7 +45,7 @@ int clientTCPSocket(const char *hostName, const char *portNum) {
 	fprintf(stderr, "addr=%s\n", nbuf);
 	fprintf(stderr, "port=%s\n", sbuf);
 
-	// ƒ\ƒPƒbƒg‚Ì¶¬
+	// ã‚½ã‚±ãƒƒãƒˆã®ç”Ÿæˆ
 	int soc = 0;
 	if ((soc = socket(res->ai_family, res->ai_socktype, res->ai_protocol))
 			== -1) {
@@ -54,7 +54,7 @@ int clientTCPSocket(const char *hostName, const char *portNum) {
 		return (-1);
 	}
 
-	// ƒT[ƒo‚ÉÚ‘±
+	// ã‚µãƒ¼ãƒã«æ¥ç¶š
 	if (connect(soc, res->ai_addr, res->ai_addrlen) == -1) {
 		perror("connect");
 		close(soc);
@@ -70,27 +70,27 @@ bool sendRecvLoop(int sock, int times) {
 	char buf[512];
 	const char msg[] = "Hello World!!";
 
-	// select—pƒ}ƒXƒN‚Ì‰Šú‰»
+	// selectç”¨ãƒã‚¹ã‚¯ã®åˆæœŸåŒ–
 	fd_set mask;
 	FD_ZERO(&mask);
-	FD_SET(sock, &mask);	// ƒ\ƒPƒbƒg‚Ìİ’è
+	FD_SET(sock, &mask);	// ã‚½ã‚±ãƒƒãƒˆã®è¨­å®š
 	int width = sock + 1;
 
-	// ƒ}ƒXƒN‚ğİ’è
+	// ãƒã‚¹ã‚¯ã‚’è¨­å®š
 	fd_set ready = mask;
 
-	// ƒ^ƒCƒ€ƒAƒEƒg’l‚ÌƒZƒbƒg
+	// ã‚¿ã‚¤ãƒ ã‚¢ã‚¦ãƒˆå€¤ã®ã‚»ãƒƒãƒˆ
 	struct timeval timeout;
 	timeout.tv_sec = 1;
 	timeout.tv_usec = 0;
 
-	// ‘—óMƒ‹[ƒv
+	// é€å—ä¿¡ãƒ«ãƒ¼ãƒ—
 	for (int i = 0; i < times; i++) {
 
-		// ƒT[ƒo‚Ö‘—M
+		// ã‚µãƒ¼ãƒã¸é€ä¿¡
 		ssize_t len;
 		if ((len = send(sock, msg, strlen(msg), 0)) == -1) {
-			// ƒGƒ‰[ˆ—
+			// ã‚¨ãƒ©ãƒ¼å‡¦ç†
 			perror("send");
 			return false;
 		}
@@ -104,15 +104,15 @@ bool sendRecvLoop(int sock, int times) {
 			return false;
 		default:
 			if (FD_ISSET(sock, &ready)) {
-				// ƒT[ƒo‚©‚çóM
+				// ã‚µãƒ¼ãƒã‹ã‚‰å—ä¿¡
 				if ((len = recv(sock, buf, sizeof(buf), 0)) == -1) {
-					// ƒGƒ‰[ˆ—
+					// ã‚¨ãƒ©ãƒ¼å‡¦ç†
 					perror("recv");
 					return false;
 				}
 
 				if (len == 0) {
-					// ƒT[ƒo‘¤‚©‚çƒRƒlƒNƒVƒ‡ƒ“Ø’f
+					// ã‚µãƒ¼ãƒå´ã‹ã‚‰ã‚³ãƒã‚¯ã‚·ãƒ§ãƒ³åˆ‡æ–­
 					fprintf(stderr, "recv:EOF\n");
 					return false;
 				}

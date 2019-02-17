@@ -19,7 +19,7 @@
 #include <sys/time.h>
 #include "libclient.h"
 
-// ¶¬‚µ‚½ƒXƒŒƒbƒh‚ğ“¯ƒXƒ^[ƒg‚³‚¹‚é‚½‚ß‚Ìƒtƒ‰ƒO
+// ç”Ÿæˆã—ãŸã‚¹ãƒ¬ãƒƒãƒ‰ã‚’åŒæ™‚ã‚¹ã‚¿ãƒ¼ãƒˆã•ã›ã‚‹ãŸã‚ã®ãƒ•ãƒ©ã‚°
 volatile bool isRunnable = false;
 
 typedef struct __timeCounter {
@@ -51,7 +51,7 @@ void printUsedTime(TIMECOUNTER* tc) {
 	printf("UsedTime: %10.10f(sec)\n", diffRealSec(tc));
 }
 
-// ƒXƒŒƒbƒh‚É“n‚·Ú‘±æƒT[ƒoî•ñ
+// ã‚¹ãƒ¬ãƒƒãƒ‰ã«æ¸¡ã™æ¥ç¶šå…ˆã‚µãƒ¼ãƒæƒ…å ±
 typedef struct __serverInfo {
 	char hostName[NI_MAXHOST];
 	char portNum[NI_MAXSERV];
@@ -61,16 +61,16 @@ typedef struct __threadParam {
 	SERVERINFO serverInfo;
 	TIMECOUNTER connectTime;
 	TIMECOUNTER sendRecvTime;
-	bool result;	// ‘—óMŒ‹‰Ê
+	bool result;	// é€å—ä¿¡çµæœ
 } THREADPARAM;
 
-// ‘ƒgƒ‰ƒCƒAƒ‹”
+// ç·ãƒˆãƒ©ã‚¤ã‚¢ãƒ«æ•°
 #define TRIALNUM 40
 
-// ‘½d“x‚Ìw’èiƒXƒŒƒbƒh”j
+// å¤šé‡åº¦ã®æŒ‡å®šï¼ˆã‚¹ãƒ¬ãƒƒãƒ‰æ•°ï¼‰
 #define THREADNUM 25
 
-// ƒRƒlƒNƒVƒ‡ƒ“‚²‚Æ‚ÌEchoBack’ÊM‰ñ”
+// ã‚³ãƒã‚¯ã‚·ãƒ§ãƒ³ã”ã¨ã®EchoBacké€šä¿¡å›æ•°
 #define ECHOBACKNUM 100
 
 // thread function
@@ -80,7 +80,7 @@ void* thread_func(void *arg) {
 	SERVERINFO* si = &(tp->serverInfo);
 	int csocket;
 
-	// ƒXƒ^[ƒgw¦‘Ò‚¿
+	// ã‚¹ã‚¿ãƒ¼ãƒˆæŒ‡ç¤ºå¾…ã¡
 	while ( true) {
 		if (isRunnable == true) {
 			break;
@@ -88,31 +88,31 @@ void* thread_func(void *arg) {
 		usleep(1000);	// 1ms
 	}
 
-	// Ú‘±ŠÔŒv‘ªŠJn
+	// æ¥ç¶šæ™‚é–“è¨ˆæ¸¬é–‹å§‹
 	countStart(&(tp->connectTime));
 
-	// ƒT[ƒo‚Éƒ\ƒPƒbƒgÚ‘±
+	// ã‚µãƒ¼ãƒã«ã‚½ã‚±ãƒƒãƒˆæ¥ç¶š
 	if ((csocket = clientTCPSocket(si->hostName, si->portNum)) == -1) {
 		fprintf(stderr, "client_socket():error\n");
 		pthread_exit(NULL);
 	}
 
-	// Ú‘±ŠÔŒv‘ªI—¹
+	// æ¥ç¶šæ™‚é–“è¨ˆæ¸¬çµ‚äº†
 	countEnd(&(tp->connectTime));
 
-	// ‘—óMŠÔŒv‘ªŠJn
+	// é€å—ä¿¡æ™‚é–“è¨ˆæ¸¬é–‹å§‹
 	countStart(&(tp->sendRecvTime));
 
-	// ‘—óMˆ—
+	// é€å—ä¿¡å‡¦ç†
 	tp->result = sendRecvLoop(csocket, ECHOBACKNUM);
 
-	// ‘—óMŠÔŒv‘ªI—¹
+	// é€å—ä¿¡æ™‚é–“è¨ˆæ¸¬çµ‚äº†
 	countEnd(&(tp->sendRecvTime));
 
-	// ƒ\ƒPƒbƒgƒNƒ[ƒY
+	// ã‚½ã‚±ãƒƒãƒˆã‚¯ãƒ­ãƒ¼ã‚º
 	close(csocket);
 
-	// tp‚Í•Ê“rƒŠƒ\[ƒXŠÇ—‚µ‚Ä‚¢‚é‚Ì‚Å‚±‚±‚Å‚Í‰ğ•ú‚µ‚È‚¢
+	// tpã¯åˆ¥é€”ãƒªã‚½ãƒ¼ã‚¹ç®¡ç†ã—ã¦ã„ã‚‹ã®ã§ã“ã“ã§ã¯è§£æ”¾ã—ãªã„
 
 	pthread_exit(NULL);
 }
@@ -142,7 +142,7 @@ void printTotalTime(THREADPARAM* tplist[], int tplistNum) {
 
 bool doConnect(const char* hostName, const char* portNum, THREADPARAM* tplist[], int tplistNum) {
 
-	// ƒ}ƒ‹ƒ`ƒXƒŒƒbƒh‚ÅƒT[ƒoÚ‘±
+	// ãƒãƒ«ãƒã‚¹ãƒ¬ãƒƒãƒ‰ã§ã‚µãƒ¼ãƒæ¥ç¶š
 	pthread_t threadId[tplistNum];
 	for (int i = 0; i < tplistNum; i++) {
 		threadId[i] = NULL;
@@ -162,11 +162,11 @@ bool doConnect(const char* hostName, const char* portNum, THREADPARAM* tplist[],
 		fprintf(stderr, "thread %d created.\n", i);
 	}
 
-	// ƒXƒŒƒbƒhƒXƒ^[ƒg
+	// ã‚¹ãƒ¬ãƒƒãƒ‰ã‚¹ã‚¿ãƒ¼ãƒˆ
 	isRunnable = true;
 	fprintf(stderr, "Thread Start!!\n");
 
-	// ƒXƒŒƒbƒhI—¹‘Ò‚¿
+	// ã‚¹ãƒ¬ãƒƒãƒ‰çµ‚äº†å¾…ã¡
 	for (int i = 0; i < tplistNum; i++) {
 		if (threadId[i] != NULL && pthread_join(threadId[i], NULL)) {
 			perror("pthread_join");
@@ -189,22 +189,22 @@ bool start(const char* hostName, const char* portNum) {
 		}
 	}
 
-	// ƒg[ƒ^ƒ‹‚ÌŠ—vŠÔ‚ÌŒvZE•\¦
-	// ƒ}ƒ‹ƒ`ƒRƒAŠÂ‹«‚É‚¨‚¢‚ÄŠeƒXƒŒƒbƒh‚Ì[I—¹-ŠJn]‚ğ‘«‚µ‡‚í‚¹‚Ä‚¢‚é‚Ì‚Å
-	// ÀÀsŠÔ‚æ‚è‘å‚«‚­‚È‚éê‡‚ª‚ ‚éiƒn[ƒhƒEƒFƒA•À—ñˆ—‚É‚È‚Á‚Ä‚¢‚é‚½‚ßj
+	// ãƒˆãƒ¼ã‚¿ãƒ«ã®æ‰€è¦æ™‚é–“ã®è¨ˆç®—ãƒ»è¡¨ç¤º
+	// ãƒãƒ«ãƒã‚³ã‚¢ç’°å¢ƒã«ãŠã„ã¦å„ã‚¹ãƒ¬ãƒƒãƒ‰ã®[çµ‚äº†æ™‚åˆ»-é–‹å§‹æ™‚åˆ»]ã‚’è¶³ã—åˆã‚ã›ã¦ã„ã‚‹ã®ã§
+	// å®Ÿå®Ÿè¡Œæ™‚é–“ã‚ˆã‚Šå¤§ãããªã‚‹å ´åˆãŒã‚ã‚‹ï¼ˆãƒãƒ¼ãƒ‰ã‚¦ã‚§ã‚¢ä¸¦åˆ—å‡¦ç†ã«ãªã£ã¦ã„ã‚‹ãŸã‚ï¼‰
 	printTotalTime(tplist, tpNum);
 	return true;
 }
 
 int main(void) {
 
-	// Š—vŠÔŒv‘ª
+	// æ‰€è¦æ™‚é–“è¨ˆæ¸¬
 	TIMECOUNTER tc;
 	countStart(&tc);
 
-	start("192.168.102.65", "10000");
+	start("localhost", "10000");
 
-	// Š—vŠÔŒv‘ªiƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚ÌŠJnƒXƒŒƒbƒh‚Ì[I—¹-ŠJn]‚Ì‚½‚ßÀÀsŠÔ‚É‹ß‚¢j
+	// æ‰€è¦æ™‚é–“è¨ˆæ¸¬ï¼ˆã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®é–‹å§‹ã‚¹ãƒ¬ãƒƒãƒ‰ã®[çµ‚äº†æ™‚åˆ»-é–‹å§‹æ™‚åˆ»]ã®ãŸã‚å®Ÿå®Ÿè¡Œæ™‚é–“ã«è¿‘ã„ï¼‰
 	countEnd(&tc);
 	printf("%d connection by %d thread with %d echoback.\n",
 	THREADNUM*TRIALNUM, THREADNUM, ECHOBACKNUM);
