@@ -1,6 +1,6 @@
 OBJS=libclient.o TCPBenchmark.o
 SRCS=$(OBJS:%.o=%.c)
-CFLAGS=-g -Wall
+CFLAGS=-g3 -Wall -std=c99 -D_GNU_SOURCE
 LDLIBS=-lpthread
 TARGET=tcpbenchmark
 $(TARGET):$(OBJS)

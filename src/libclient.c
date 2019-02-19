@@ -76,12 +76,9 @@ bool sendRecvLoop(int sock, int times) {
 	FD_SET(sock, &mask);	// ソケットの設定
 	int width = sock + 1;
 
-	// マスクを設定
-	fd_set ready = mask;
-
 	// タイムアウト値のセット
 	struct timeval timeout;
-	timeout.tv_sec = 1;
+	timeout.tv_sec = 600;
 	timeout.tv_usec = 0;
 
 	// 送受信ループ
@@ -94,6 +91,9 @@ bool sendRecvLoop(int sock, int times) {
 			perror("send");
 			return false;
 		}
+
+		// マスクを設定
+		fd_set ready = mask;
 
 		switch (select(width, (fd_set *) &ready, NULL, NULL, &timeout)) {
 		case -1:
