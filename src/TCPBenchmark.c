@@ -139,36 +139,72 @@ void* thread_func(void *arg) {
 	pthread_exit(NULL);
 }
 
-void printTotalTime(THREADPARAM* tplist[], int tplistNum) {
+void printResult(THREADPARAM* tplist[], int tplistNum, TIMECOUNTER tc[], int tcNum) {
 	double totalConnectTime = 0;
+	double maxConnectTime = 0;
 	double totalSendRecvTime = 0;
+	double maxSendRecvTime = 0;
 	int successNum = 0;
 	int failConnectNum = 0;
 	int failSendRecvNum = 0;
 	for (int i = 0; i < tplistNum; i++) {
-		printf("Thread(%d): \n", i);
-		printf("%s", tplist[i]->result ? "true" : "false");
+		printf("Thread(%d): ", i);
+		printf("%s\n", tplist[i]->result ? "true" : "false");
 		printf("  connectTime: ");
 		printUsedTime(&(tplist[i]->connectTime));
 		printf("  sendRecvTime: ");
 		printUsedTime(&(tplist[i]->sendRecvTime));
 		if (tplist[i]->result == true) {
 			successNum++;
-			totalConnectTime += diffRealSec(&(tplist[i]->connectTime));
-			totalSendRecvTime += diffRealSec(&(tplist[i]->sendRecvTime));
+			double connectTime = diffRealSec(&(tplist[i]->connectTime));
+			if ( connectTime > maxConnectTime ) { maxConnectTime = connectTime; }
+			double sendRecvTime = diffRealSec(&(tplist[i]->sendRecvTime));
+			if ( sendRecvTime > maxSendRecvTime ) { maxSendRecvTime = sendRecvTime; }
+			totalConnectTime += connectTime;
+			totalSendRecvTime += sendRecvTime;
 		}
 		failConnectNum += tplist[i]->failConnectNum;
 		failSendRecvNum += tplist[i]->failSendRecvNum;
 		free(tplist[i]);
 	}
-	printf("TOTAL: success: %d/%d\n", successNum, tplistNum);
-	printf("TOTAL: failConnectNum: %d\n", failConnectNum);
-	printf("TOTAL: failSendRecvNum: %d\n", failSendRecvNum);
-	printf("Time for success:\n");
-	printf("TOTAL: connectTime(total): %lf\n", totalConnectTime);
-	printf("TOTAL: connectTime(avg): %lf\n", totalConnectTime/successNum);
-	printf("TOTAL: sendRecvTime(total): %lf\n", totalSendRecvTime);
-	printf("TOTAL: sendRecvTime(avf): %lf\n", totalSendRecvTime/successNum);
+
+	char* category[] = {
+		"thread",
+		"success",
+		"failedConnect",
+		"failedSendRecv",
+		"connectTime(total)",
+		"connectTime(average)",
+		"connectTime(max)",
+		"sendRecvTime(total)",
+		"sendRecvTime(average)",
+		"sendRecvTime(max)",
+		"benchmarkTime(include failed)"
+	};
+
+	printf("---------------------------------------------------------\n");
+	int categoryNum = sizeof(category)/sizeof(char*); 
+	for ( int i=0; i<categoryNum; i++ ) {
+		printf("%s", category[i]);
+		if ( i < categoryNum - 1 ) {
+			printf(",");
+		}
+	}
+	printf("\n");
+
+	printf("%d,", tplistNum);
+	printf("%d,", successNum);
+	printf("%d,", failConnectNum);
+	printf("%d,", failSendRecvNum);
+	printf("%lf,", totalConnectTime);
+	printf("%lf,", totalConnectTime/successNum);
+	printf("%lf,", maxConnectTime);
+	printf("%lf,", totalSendRecvTime);
+	printf("%lf,", totalSendRecvTime/successNum);
+	printf("%lf,", maxSendRecvTime);
+	printf("%lf\n", diffRealSec(&tc[0]));
+	printf("---------------------------------------------------------\n");
+	fflush(stdout);
 }
 
 bool doConnect(const char* hostName, const char* portNum, THREADPARAM* tplist[], int tplistNum, TIMECOUNTER* tc) {
@@ -220,24 +256,25 @@ bool doConnect(const char* hostName, const char* portNum, THREADPARAM* tplist[],
 		if (threadId[i] != -1 && pthread_join(threadId[i], NULL)) {
 			perror("pthread_join");
 			
-			// 所要時間計測（アプリケーションの開始スレッドの[終了時刻-開始時刻]のため実実行時間に近い）
+			// 所要時間計測（ベンチマーク全体の所要時間（接続・転送失敗の通信も含む））
 			countEnd(tc);
 			return false;
 		}
 	}
-	// 所要時間計測（アプリケーションの開始スレッドの[終了時刻-開始時刻]のため実実行時間に近い）
+	// 所要時間計測（ベンチマーク全体の所要時間（接続・転送失敗の通信も含む））
 	countEnd(tc);
 	return true;
 }
 
-bool start(const char* hostName, const char* portNum, TIMECOUNTER* tc) {
+bool start(const char* hostName, const char* portNum) {
 
+	TIMECOUNTER tc[TRIALNUM];
 	int tpNum = THREADNUM*TRIALNUM;
 	THREADPARAM* tplist[tpNum];
 	for ( int i=0; i<TRIALNUM; i++ ) {
 		int pos = i * THREADNUM;
 		THREADPARAM** p = tplist + pos;
-		bool result = doConnect(hostName, portNum, p, THREADNUM, tc);
+		bool result = doConnect(hostName, portNum, p, THREADNUM, &tc[i]);
 		if ( result == false ) {
 			return false;
 		}
@@ -246,7 +283,7 @@ bool start(const char* hostName, const char* portNum, TIMECOUNTER* tc) {
 	// トータルの所要時間の計算・表示
 	// マルチコア環境において各スレッドの[終了時刻-開始時刻]を足し合わせているので
 	// 実実行時間より大きくなる場合がある（ハードウェア並列処理になっているため）
-	printTotalTime(tplist, tpNum);
+	printResult(tplist, tpNum, tc, TRIALNUM);
 	return true;
 }
 
@@ -262,7 +299,6 @@ void update_rlimit(int resource, int soft, int hard) {
 }
 
 int main(int argc, char* argv[]) {
-
 	if ( argc != 3 ) {
 		printf("Usage: %s IP_ADDR PORT\n", argv[0]);
 		exit(-1);
@@ -270,8 +306,6 @@ int main(int argc, char* argv[]) {
 
 	char* hostname = argv[1];
 	char* port = argv[2];
-
-	printf("hostname = %s, port = %s\n", hostname, port);
 
 	// update system resource limitation
 	update_rlimit(RLIMIT_NOFILE, 8192, 8192);	// file discriptor
@@ -281,16 +315,14 @@ int main(int argc, char* argv[]) {
 	THREADNUM = 1000;	// 多重度の指定（スレッド数）
 	ECHOBACKNUM = 100;	// コネクションごとのEchoBack通信回数
 
+	// 接続情報を表示
+	printf("hostname = %s, port = %s\n", hostname, port);
+	printf("%d connection by %d thread with %d echoback.\n", THREADNUM*TRIALNUM, THREADNUM, ECHOBACKNUM);
+
 	// 所要時間計測
-	TIMECOUNTER tc;
-	bool result = start(hostname, port, &tc);
+	bool result = start(hostname, port);
 	if ( result == false ) {
 		fprintf(stderr, "ERROR: cannot complete the benchmark.\n");
 	}
-	printf("%d connection by %d thread with %d echoback.\n",
-	THREADNUM*TRIALNUM, THREADNUM, ECHOBACKNUM);
-	printUsedTime(&tc);
-	fflush(stdout);
-
 	return EXIT_SUCCESS;
 }
