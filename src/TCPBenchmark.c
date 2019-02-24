@@ -26,31 +26,25 @@ volatile bool isRunnable = false;
 volatile bool isPrepared = false;
 
 typedef struct __timeCounter {
-	struct timeval startTime;
-	struct timeval endTime;
+	struct timespec startTs;
+	struct timespec endTs;
 } TIMECOUNTER;
 
-double getTimeOfDayBySec() {
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	return tv.tv_sec + tv.tv_usec * 1e-6;
-}
-
 void countStart(TIMECOUNTER* tc) {
-	gettimeofday(&(tc->startTime), NULL);
+	clock_gettime(CLOCK_REALTIME, &(tc->startTs));
 }
 
 void countEnd(TIMECOUNTER* tc) {
-	gettimeofday(&(tc->endTime), NULL);
+	clock_gettime(CLOCK_REALTIME, &(tc->endTs));
 }
 
 /**
   * amount required time 
   */
 double diffRealSec(TIMECOUNTER* tc) {
-    time_t diffsec = difftime(tc->endTime.tv_sec, tc->startTime.tv_sec);
-    suseconds_t diffsub = tc->endTime.tv_usec - tc->startTime.tv_usec;
-    return diffsec+diffsub*1e-6;
+	time_t diffsec = difftime(tc->endTs.tv_sec, tc->startTs.tv_sec);
+	long diffnanosec = tc->endTs.tv_nsec - tc->startTs.tv_nsec;
+	return diffsec + diffnanosec*1e-9;
 }
 
 void printUsedTime(TIMECOUNTER* tc) {
