@@ -107,7 +107,9 @@ bool sendRecvLoop(int sock, int times) {
 				// サーバから受信
 				if ((len = recv(sock, buf, sizeof(buf), 0)) == -1) {
 					// エラー処理
-					perror("recv");
+					char err_msg[256] = "";
+					sprintf(err_msg, "recv: %d", i);
+					perror(err_msg);
 					return false;
 				}
 

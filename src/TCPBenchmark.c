@@ -14,6 +14,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <pthread.h>
 #include <sys/time.h>
@@ -119,6 +120,14 @@ void* thread_func(void *arg) {
 		// 接続時間計測終了
 		countEnd(&(tp->connectTime));
 
+		// 実際の送受信処理の計測の前に接続確認を行う
+		if ( sendRecvLoop(csocket, 1) == false ) {
+			fprintf(stderr, "csocket is not connected.\n");
+			tp->result = false;
+			tp->failConnectNum++;
+			continue;
+		}
+
 		// 送受信時間計測開始
 		countStart(&(tp->sendRecvTime));
 
@@ -165,6 +174,8 @@ void printResult(THREADPARAM* tplist[], int tplistNum, TIMECOUNTER tc[], int tcN
 		}
 		failConnectNum += tplist[i]->failConnectNum;
 		failSendRecvNum += tplist[i]->failSendRecvNum;
+		printf("  failConnectNum = %d\n", tplist[i]->failConnectNum);
+		printf("  failSendRecvNum = %d\n", tplist[i]->failSendRecvNum);
 		free(tplist[i]);
 	}
 
@@ -289,10 +300,10 @@ bool start(const char* hostName, const char* portNum) {
 
 void update_rlimit(int resource, int soft, int hard) {
 	struct rlimit rl;
-	getrlimit(RLIMIT_NOFILE, &rl);
-	rl.rlim_cur = 81920;
-	rl.rlim_max = 81920;
-	if (setrlimit(RLIMIT_NOFILE, &rl ) ==  -1 ) {
+	getrlimit(resource, &rl);
+	rl.rlim_cur = soft;
+	rl.rlim_max = hard;
+	if (setrlimit(resource, &rl ) ==  -1 ) {
 		perror("setrlimit");
 		exit(-1);
 	}
