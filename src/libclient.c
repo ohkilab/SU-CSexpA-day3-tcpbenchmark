@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -56,9 +57,13 @@ int clientTCPSocket(const char *hostName, const char *portNum) {
 
 	// サーバに接続
 	if (connect(soc, res->ai_addr, res->ai_addrlen) == -1) {
+		const int number = errno;
 		perror("connect");
 		close(soc);
 		freeaddrinfo(res);
+		if ( number == ECONNREFUSED ) {
+			return -2;
+		}
 		return (-1);
 	}
 

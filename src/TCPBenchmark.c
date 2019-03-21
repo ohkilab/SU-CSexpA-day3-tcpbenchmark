@@ -75,6 +75,8 @@ int THREADNUM = 1000;
 // コネクションごとのEchoBack通信回数
 int ECHOBACKNUM = 100;
 
+int RECONNECT_MAX = 3000;
+
 // thread function
 void* thread_func(void *arg) {
 
@@ -95,19 +97,25 @@ void* thread_func(void *arg) {
 		}
 	}
 
-	while (tp->result == false) {
+	while (tp->result == false && tp->failConnectNum < RECONNECT_MAX ) {
 
 		// 接続時間計測開始
 		countStart(&(tp->connectTime));
 
 		// サーバにソケット接続
-		if ((csocket = clientTCPSocket(si->hostName, si->portNum)) == -1) {
+		if ((csocket = clientTCPSocket(si->hostName, si->portNum)) < 0) {
 			fprintf(stderr, "client_socket():error\n");
 			tp->result = false;
 			tp->failConnectNum++;
 
 			// 接続時間計測終了
 			countEnd(&(tp->connectTime));
+
+			if ( csocket == -2 ) {
+				// connection refused ( maybe server down )
+				fprintf(stderr, "maybe server down.\n");
+				break;
+			}
 			continue;
 		}
 
@@ -275,13 +283,14 @@ bool start(const char* hostName, const char* portNum) {
 
 	TIMECOUNTER tc[TRIALNUM];
 	int tpNum = THREADNUM*TRIALNUM;
+	bool result = true;
 	THREADPARAM* tplist[tpNum];
 	for ( int i=0; i<TRIALNUM; i++ ) {
 		int pos = i * THREADNUM;
 		THREADPARAM** p = tplist + pos;
-		bool result = doConnect(hostName, portNum, p, THREADNUM, &tc[i]);
-		if ( result == false ) {
-			return false;
+		bool r = doConnect(hostName, portNum, p, THREADNUM, &tc[i]);
+		if ( r == false ) {
+			result = false;
 		}
 	}
 
@@ -289,7 +298,7 @@ bool start(const char* hostName, const char* portNum) {
 	// マルチコア環境において各スレッドの[終了時刻-開始時刻]を足し合わせているので
 	// 実実行時間より大きくなる場合がある（ハードウェア並列処理になっているため）
 	printResult(tplist, tpNum, tc, TRIALNUM);
-	return true;
+	return result;
 }
 
 void update_rlimit(int resource, int soft, int hard) {
@@ -304,8 +313,8 @@ void update_rlimit(int resource, int soft, int hard) {
 }
 
 int main(int argc, char* argv[]) {
-	if ( argc != 3 ) {
-		printf("Usage: %s IP_ADDR PORT\n", argv[0]);
+	if ( argc != 6 ) {
+		printf("Usage: %s IP_ADDR PORT TRIAL THREAD ECHOBACK\n", argv[0]);
 		exit(-1);
 	}
 
@@ -316,9 +325,9 @@ int main(int argc, char* argv[]) {
 	update_rlimit(RLIMIT_NOFILE, 8192, 8192);	// file discriptor
 	update_rlimit(RLIMIT_STACK, RLIM_INFINITY, RLIM_INFINITY);
 
-	TRIALNUM = 1;	// 総トライアル数
-	THREADNUM = 1000;	// 多重度の指定（スレッド数）
-	ECHOBACKNUM = 100;	// コネクションごとのEchoBack通信回数
+	TRIALNUM = atoi(argv[3]);	// 総トライアル数
+	THREADNUM = atoi(argv[4]);	// 多重度の指定（スレッド数）
+	ECHOBACKNUM = atoi(argv[5]);	// コネクションごとのEchoBack通信回数
 
 	// 接続情報を表示
 	printf("hostname = %s, port = %s\n", hostname, port);
