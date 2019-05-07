@@ -230,7 +230,7 @@ bool doConnect(const char* hostName, const char* portNum, THREADPARAM* tplist[],
 	pthread_attr_getstacksize(&attr, &stacksize);
 	size_t new_stacksize = stacksize / 4;
 	pthread_attr_setstacksize(&attr, new_stacksize);
-	printf("Thread stack size = %d bytes \n", new_stacksize);
+	printf("Thread stack size = %ld bytes \n", new_stacksize);
 
 	// マルチスレッドでサーバ接続
 	pthread_t threadId[tplistNum];
@@ -243,6 +243,8 @@ bool doConnect(const char* hostName, const char* portNum, THREADPARAM* tplist[],
 		strcpy(tp->serverInfo.hostName, hostName);
 		strcpy(tp->serverInfo.portNum, portNum);
 		tp->result = false;
+		tp->failConnectNum = 0;
+		tp->failSendRecvNum = 0;
 		tplist[i] = tp;
 
 		if (pthread_create(&threadId[i], &attr, thread_func, tp)) {
