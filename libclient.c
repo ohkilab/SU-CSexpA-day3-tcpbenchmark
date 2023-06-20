@@ -71,9 +71,15 @@ int clientTCPSocket(const char *hostName, const char *portNum) {
 	return (soc);
 }
 
-bool sendRecvLoop(int sock, int times) {
-	char buf[512];
-	const char msg[] = "Hello World!!";
+int sendRecvLoop(int sock, const char* msg, int msg_size, int times, int thread_id, const char* responsePostfix ) {
+
+	// message size + (responsePostfix) + "\r\n" + "\0"
+	const int bufsize = msg_size + strlen(responsePostfix) + 3 + 512;
+	char buf[bufsize];
+	int times_success = 0;
+
+  char expected[strlen(msg)+3+2+1];
+  sprintf(expected, "%s%s\r\n", msg, responsePostfix);
 
 	// select用マスクの初期化
 	fd_set mask;
@@ -94,7 +100,7 @@ bool sendRecvLoop(int sock, int times) {
 		if ((len = send(sock, msg, strlen(msg), 0)) == -1) {
 			// エラー処理
 			perror("send");
-			return false;
+			return times_success;
 		}
 
 		// マスクを設定
@@ -103,10 +109,10 @@ bool sendRecvLoop(int sock, int times) {
 		switch (select(width, (fd_set *) &ready, NULL, NULL, &timeout)) {
 		case -1:
 			perror("select");
-			return false;
+			return times_success;
 		case 0:
 			perror("select timeout");
-			return false;
+			return times_success;
 		default:
 			if (FD_ISSET(sock, &ready)) {
 				// サーバから受信
@@ -115,18 +121,25 @@ bool sendRecvLoop(int sock, int times) {
 					char err_msg[256] = "";
 					sprintf(err_msg, "recv: %d", i);
 					perror(err_msg);
-					return false;
+					return times_success;
 				}
 
 				if (len == 0) {
 					// サーバ側からコネクション切断
 					fprintf(stderr, "recv:EOF\n");
-					return false;
+					return times_success;
+				}
+
+				buf[len] = '\0';
+				if ( strcmp(buf, expected) == 0 ) {
+					times_success++;
+				} else {
+					fprintf(stderr, "Unexpected response: ACTUAL:[%s](%ld) <> EXPECTED:[%s](%ld)\n", buf, strlen(buf), expected, strlen(expected));
 				}
 			}
 
 			break;
 		}
 	}
-	return true;
+	return times_success;
 }
