@@ -1,1 +1,2 @@
-tcpbenchmark
+/Debug/
+*.o
