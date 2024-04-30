@@ -85,7 +85,7 @@ int sendRecvLoop(int sock, const char *msg, int msg_size, int times, int thread_
 	int times_success = 0;
 
 	char expected[strlen(msg) + 3 + 2 + 1];
-	sprintf(expected, "%s%s\r\n", msg, responsePostfix);
+	sprintf(expected, "%s%s", msg, responsePostfix);
 
 	// select用マスクの初期化
 	fd_set mask;
@@ -142,7 +142,15 @@ int sendRecvLoop(int sock, const char *msg, int msg_size, int times, int thread_
 					return times_success;
 				}
 
-				buf[len] = '\0';
+				if (buf[len - 2] == '\r' && buf[len - 1] == '\n')
+				{
+					buf[len - 2] = '\0';
+				}
+				else
+				{
+					buf[len] = '\0';
+				}
+
 				if (strcmp(buf, expected) == 0)
 				{
 					times_success++;
