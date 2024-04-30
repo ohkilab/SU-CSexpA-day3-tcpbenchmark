@@ -21,9 +21,12 @@ int clientTCPSocket(const char *hostName, const char *portNum);
 /**
  * @brief 送受信ループ
  * @param soc クライアントソケット
+ * @param msg 送信メッセージ
+ * @param msg_size 送信メッセージのサイズ
  * @param times 送信回数
- * @return 送受信成功(true) or 失敗(false)
+ * @param thread_id デバッグ用（メッセージに組み込むため）
+ * @return 送受信成功回数
  */
-bool sendRecvLoop(int sock, int times);
+int sendRecvLoop(int sock, const char *msg, int msg_size, int times, int thread_id, const char *responsePostfix);
 
 #endif /* LIBCLIENT_H_ */
